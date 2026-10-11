@@ -10,10 +10,6 @@
 <p align="center"><b>Wnioskowanie LLM, zoptymalizowane pod Twojego Maca</b><br>Ciągłe batchowanie i warstwowy cache KV, zarządzane bezpośrednio z paska menu.</p>
 
 <p align="center">
-<a href="https://www.buymeacoffee.com/jundot"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" height="40"></a>
-</p>
-
-<p align="center">
   <img src="https://img.shields.io/badge/license-Apache%202.0-blue" alt="License">
   <img src="https://img.shields.io/badge/python-3.11--3.13-green" alt="Python 3.11-3.13">
   <img src="https://img.shields.io/badge/platform-Apple%20Silicon-black?logo=apple" alt="Apple Silicon">
@@ -38,6 +34,7 @@
   <a href="README.zh.md">中文</a> ·
   <a href="README.ko.md">한국어</a> ·
   <a href="README.ja.md">日本語</a> ·
+  <a href="README.fr.md">Français</a> ·
   <b>Polski</b>
 </p>
 
@@ -61,7 +58,8 @@ Pobierz `.dmg` ze strony [Releases](https://github.com/jundot/omlx/releases), pr
 
 ```bash
 brew tap jundot/omlx https://github.com/jundot/omlx
-brew install jundot/omlx/omlx
+brew install jundot/omlx/omlx --with-custom-kernel   # Z natywnymi kernelami (wymaga pełnego Xcode)
+# Bez pełnego Xcode? brew install jundot/omlx/omlx instaluje bez kerneli
 
 # Aktualizacja do najnowszej wersji
 brew update && brew upgrade omlx
@@ -73,37 +71,30 @@ omlx start
 /opt/homebrew/opt/omlx/libexec/bin/pip install mcp
 ```
 
-Opcjonalne natywne kernele dla GLM-5.2 / MiniMax M3 wymagają obecnie kompilacji HEAD:
-
-```bash
-brew install jundot/omlx/omlx --HEAD --with-custom-kernel
-```
-
 ### Ze źródeł
 
 ```bash
 git clone https://github.com/jundot/omlx.git
 cd omlx
-pip install -e .          # Tylko rdzeń
-pip install -e ".[mcp]"   # Z obsługą MCP (Model Context Protocol)
-
-# Natywne kernele dla GLM-5.2 / MiniMax M3 / Qwen3.5 (zdecydowanie zalecane,
-# jeśli serwujesz te rodziny modeli — patrz uwaga poniżej)
-OMLX_WITH_CUSTOM_KERNEL=1 pip install -e .
+make install                # Instalacja edytowalna z web UI i natywnymi kernelami
+# Bez pełnego Xcode? make install-no-kernels instaluje bez kerneli
+make mcp                    # Opcjonalnie: obsługa MCP (Model Context Protocol)
 ```
 
 Wymaga macOS 15.0+ (Sequoia), Pythona 3.11–3.13 oraz Apple Silicon (M1/M2/M3/M4/M5).
 
-> **Uwaga o natywnych kernelach:** zwykłe `pip install -e .` ich NIE kompiluje,
-> a affected rodziny modeli po cichu przechodzą wtedy na dużo wolniejsze
-> ścieżki generyczne — dla GLM-5.2 sfuzowany prefill DSA jest z kernelami około
-> 30x szybszy (zmierzono 845 vs ~29 tok/s na M3 Ultra), a wersja zapasowa zużywa
-> też więcej pamięci (#2137). Kompilacja wymaga toolchaina Metal, którego same
-> Command Line Tools nie dostarczają (`xcrun: error: unable to find utility
-> "metal"`): zainstaluj pełny Xcode albo użyj oficjalnego DMG, który zawiera
-> kernele już skompilowane. Homebrew potrafi je zbudować poleceniem
-> `brew install jundot/omlx/omlx --HEAD --with-custom-kernel`, ale ta kompilacja
-> również wymaga pełnego Xcode. Weryfikacja instalacji:
+> **Uwaga o natywnych kernelach:** GLM-5.2, MiniMax M3 i Qwen3.5 ich potrzebują.
+> Bez nich te rodziny po cichu przechodzą na dużo wolniejsze ścieżki generyczne —
+> dla GLM-5.2 sfuzowany prefill DSA jest z kernelami około 30x szybszy
+> (zmierzono 845 vs ~29 tok/s na M3 Ultra), a wersja zapasowa zużywa też więcej
+> pamięci (#2137). `make install` buduje je i sprawdza, czy każdy się ładuje.
+> Wymaga to pełnego Xcode z toolchainem Metal (`xcodebuild -downloadComponent
+> MetalToolchain`); same Command Line Tools go nie dostarczają (`xcrun: error:
+> unable to find utility "metal"`). Bez Xcode użyj oficjalnego DMG, który zawiera
+> kernele już skompilowane, albo `make install-no-kernels`. Zwykłe
+> `pip install -e .` też je pomija. `make kernels` przebudowuje same kernele od
+> zera. Homebrew buduje je z `--with-custom-kernel`, co też wymaga pełnego Xcode.
+> Weryfikacja instalacji:
 >
 > ```bash
 > python -c "from omlx.custom_kernels import native_kernel_status; print(native_kernel_status())"
@@ -170,11 +161,11 @@ Interfejs webowy pod `/admin` do monitoringu w czasie rzeczywistym, zarządzania
 
 ### Eksperymentalne wnioskowanie na wiele Maków
 
-Kompilacje ze źródeł potrafią podzielić jeden pobrany model językowy na Maki o różnej pamięci, używając rang potokowych MLX po Ring lub Thunderbolt RDMA/JACCL. Panel Cluster obsługuje wykrywanie peerów tylko do odczytu, ścisłą weryfikację SSH/runtime, planowanie shardów z uwzględnieniem bajtów przy nierównych pamięciach, mierzone równoważenie obciążenia obliczeń/łącza, strojenie wykonania ze świadomością zapasu, aktywację oraz żywą mapę shardów/wydajności na obu Makach. Profile interaktywny, zrównoważony i przepływnościowy udostępniają sklejone batchowanie, powinowactwo cache promptów, limity rotującego-KV, strojenie połączeń Ring oraz eksperymentalną ścieżkę wyjścia tylko-tokenową z bramką capability. Zobacz [Wnioskowanie rozproszone na Maki](docs/distributed-cluster.md) — konfiguracja, granice bezpieczeństwa, aktualne ograniczenia i lista kontrolna walidacji na fizycznym sprzęcie.
+Kompilacje ze źródeł potrafią podzielić jeden pobrany model językowy na Maki o różnej pamięci, używając rang potokowych MLX po Ring lub Thunderbolt RDMA/JACCL. Panel Cluster obsługuje wykrywanie peerów tylko do odczytu, ścisłą weryfikację SSH/runtime, planowanie shardów z uwzględnieniem bajtów przy nierównych pamięciach, mierzone równoważenie obciążenia obliczeń/łącza, strojenie wykonania ze świadomością zapasu, aktywację oraz żywą mapę shardów/wydajności na obu Makach. Profile interaktywny, zrównoważony i przepływnościowy udostępniają sklejone batchowanie, powinowactwo cache promptów, limity rotującego-KV, strojenie połączeń Ring oraz eksperymentalną ścieżkę wyjścia tylko-tokenową z bramką capability. Zobacz [Wnioskowanie rozproszone na Maki](docs/experimental/distributed-cluster.md) — konfiguracja, granice bezpieczeństwa, aktualne ograniczenia i lista kontrolna walidacji na fizycznym sprzęcie.
 
 ### Modele wizyjno-językowe
 
-Uruchamiaj VLM na tym samym stosie ciągłego batchowania i warstwowego cache KV co tekstowe LLM. Obsługuje czat wieloobrazkowy, wejścia obrazkowe base64/URL/plik oraz tool calling z kontekstem wizyjnym. Checkpointy MiMo V2.6 z dołączonymi sidecarami przyjmują też wideo z próbkowanymi klatkami i audio 24 kHz. Konwersja oQ oficjalnych checkpointów MiMo V2.6 zachowuje obsługę obrazu i dźwięku. Modele OCR (DeepSeek-OCR, DOTS-OCR, GLM-OCR) wykrywane są automatycznie, ze zoptymalizowanymi promptami.
+Uruchamiaj VLM na tym samym stosie ciągłego batchowania i warstwowego cache KV co tekstowe LLM. Obsługuje czat wieloobrazkowy, wejścia obrazkowe base64/URL/plik oraz tool calling z kontekstem wizyjnym. Checkpointy MiMo V2.6 z dołączonymi sidecarami przyjmują też wideo z próbkowanymi klatkami i audio 24 kHz. Checkpointy Qwen3.5, Qwen3.6 i Qwen3.8 (gęste i MoE) przyjmują natywne wideo jako base64 `video_url` / `input_video` data URI; wideo wymaga OpenCV (`opencv-python-headless`). Konwersja oQ oficjalnych checkpointów MiMo V2.6 zachowuje obsługę obrazu i dźwięku. Modele OCR (DeepSeek-OCR, DOTS-OCR, GLM-OCR) wykrywane są automatycznie, ze zoptymalizowanymi promptami.
 
 ### Warstwowy cache KV (gorący + zimny)
 
@@ -260,7 +251,7 @@ Natywnie aplikacja paska menu w Swift / SwiftUI (nie Electron). Uruchamiaj, zatr
 
 ### Zgodność API
 
-Zamiennik API OpenAI i Anthropic typu drop-in. Obsługuje strumieniowe statystyki użycia (`stream_options.include_usage`), adaptacyjne myślenie Anthropic oraz wejścia wizyjne (base64, URL).
+Zamiennik API OpenAI i Anthropic typu drop-in. Obsługuje strumieniowe statystyki użycia (`stream_options.include_usage`), postęp prefill w stylu llama.cpp (`return_progress`), adaptacyjne myślenie Anthropic oraz wejścia wizyjne (obrazy jako base64 albo URL, wideo jako base64).
 
 | Endpoint | Opis |
 |----------|------|
@@ -269,7 +260,11 @@ Zamiennik API OpenAI i Anthropic typu drop-in. Obsługuje strumieniowe statystyk
 | `POST /v1/messages` | API Anthropic Messages |
 | `POST /v1/embeddings` | Embeddingi tekstu |
 | `POST /v1/rerank` | Reranking dokumentów |
+| `POST /v1/systemone` | Typowane decyzje z modelami decyzyjnymi (TypeSafe System One) |
 | `GET /v1/models` | Lista dostępnych modeli |
+| `POST /tokenize`, `POST /detokenize` | API tokenizera zgodne z vLLM (też pod `/v1`) |
+
+Admin API do ustawień, modeli, pobierania, kwantyzacji i benchmarków przyjmuje główny klucz API jako token Bearer i działa też w trybie headless. Zobacz [Admin API](docs/admin-api.md).
 
 ### Tool calling i wyjście strukturalne
 
@@ -288,6 +283,8 @@ Obsługuje wszystkie formaty wywołań funkcji z mlx-lm, walidację schematów J
 | Longcat | `<longcat_tool_call>` |
 
 Modele spoza listy też mogą działać, jeśli ich szablon czatu akceptuje `tools`, a wyjście używa rozpoznawalnego formatu XML `<tool_call>`. Przy strumieniowaniu z narzędziami tekst asystenta emitowany jest przyrostowo, znane znaczniki sterujące tool-call są ukrywane z widocznej treści, a strukturalne wywołania narzędzi emitowane są po sparsowaniu ukończonej tury.
+
+Sama gramatyka JSON, EBNF albo regex ogranicza odpowiedź od pierwszego generowanego tokenu, więc `thinking_budget` jest ignorowany. Skonfiguruj zgodny `reasoning_parser`, żeby połączyć ograniczone wyjście z osobną, budżetowaną fazą rozumowania.
 
 ## Modele
 
@@ -309,8 +306,9 @@ Modele wykrywane są automatycznie po typie. Możesz też pobierać modele bezpo
 | LLM | Każdy model obsługiwany przez [mlx-lm](https://github.com/ml-explore/mlx-lm) |
 | VLM | Seria Qwen3.5, GLM-4V, Pixtral i inne modele [mlx-vlm](https://github.com/Blaizzy/mlx-vlm) |
 | OCR | DeepSeek-OCR, DOTS-OCR, GLM-OCR |
-| Embedding | BERT, BGE-M3, ModernBERT |
+| Embedding | BERT, BGE-M3, ModernBERT, EmbeddingGemma 2 |
 | Reranker | ModernBERT, XLM-RoBERTa |
+| Decyzja | Clef, Clef-Flash, OpenJev |
 
 ## Konfiguracja CLI
 
@@ -350,6 +348,9 @@ omlx serve --model-dir ~/models --api-key twoj-tajny-klucz
 
 # Dostęp sieciowy wymaga uwierzytelnienia
 OMLX_API_KEY=twoj-tajny-klucz omlx serve --model-dir ~/models --host 0.0.0.0
+
+# Tylko API wnioskowania i admina, bez web UI (nie zapisywane w ustawieniach)
+omlx serve --model-dir ~/models --headless
 ```
 
 Domyślny limit cache SSD, `auto`, zużywa 50% sumy wolnego miejsca na dysku i istniejących plików cache SSD, wliczając sidecary GDN. Budżet odświeżany jest w trakcie użycia i nie kurczy się tylko dlatego, że cache rośnie albo serwer się restartuje. Inne zużycie dysku może zmienić budżet. Ustaw `--paged-ssd-cache-max-size 20GB` dla sztywnego limitu.
@@ -368,7 +369,8 @@ FastAPI Server (OpenAI / Anthropic API)
     │   ├── BatchedEngine (LLM, ciągłe batchowanie)
     │   ├── VLMEngine (modele wizyjno-językowe)
     │   ├── EmbeddingEngine
-    │   └── RerankerEngine
+    │   ├── RerankerEngine
+    │   └── DecisionEngine
     │
     ├── ProcessMemoryEnforcer (łączny limit pamięci, kontrole TTL)
     │
@@ -383,33 +385,48 @@ FastAPI Server (OpenAI / Anthropic API)
 
 </details>
 
-## Development
+## Programowanie
+
+### Polecenia budowania
+
+| Polecenie | Co robi |
+|---|---|
+| `make install` | Instalacja edytowalna serwera i web UI, potem natywne kernele |
+| `make install-no-kernels` | To samo bez kerneli, dla maszyn bez pełnego Xcode |
+| `make mcp` | Dodaje obsługę MCP (Model Context Protocol) |
+| `make dev` | Jak `make install`, z narzędziami deweloperskimi (`make dev-no-kernels` pomija kernele) |
+| `make kernels` | Usuwa zbudowane natywne kernele, kompiluje je od nowa w miejscu i sprawdza, czy każdy się ładuje |
+| `make web` | Przebudowuje CSS web UI i normalizuje pliki tłumaczeń |
+| `make app` | Przygotowuje uruchamialne `oMLX.app` ze świeżo skompilowanymi natywnymi kernelami |
+
+Natywne kernele wymagają pełnego Xcode z toolchainem Metal (`xcodebuild -downloadComponent MetalToolchain`).
 
 ### Serwer CLI
 
 ```bash
 git clone https://github.com/jundot/omlx.git
 cd omlx
-pip install -e ".[dev]"
-pytest -m "not slow"
+make dev
+pytest
 ```
+
+### Interfejs webowy
+
+Webowe UI admina mieszka w `apps/omlx-web/` i jest w tej samej paczce, więc `make dev` instaluje je też. Po edycji szablonów, JavaScriptu albo tłumaczeń uruchom `make web`, żeby przebudować CSS i znormalizować pliki tłumaczeń.
 
 ### Aplikacja macOS
 
-Natywnie aplikacja SwiftUI mieszka w `apps/omlx-mac/`. Wymaga Xcode 26.5+ i Pythona 3.11+. venvstacks jest zadeklarowany jako zależność deweloperska, więc `pip install -e ".[dev]"` (albo `uv sync --dev`) dociąga przypiętą wersję. Skrypt budujący wraca też do `uvx venvstacks` albo `pipx run venvstacks`, jeśli wolisz narzędzie globalne hosta.
+Natywnie aplikacja SwiftUI mieszka w `apps/omlx-mac/`. Wymaga Xcode 26.5+ i Pythona 3.11+. venvstacks jest zadeklarowany jako zależność deweloperska, więc `make dev` (albo `uv sync --dev`) dociąga przypiętą wersję. Skrypt budujący wraca też do `uvx venvstacks` albo `pipx run venvstacks`, jeśli wolisz narzędzie globalne hosta.
 
 ```bash
-# Przygotuj uruchamialne oMLX.app (xcodebuild + warstwy Pythona venvstacks + podpis ad-hoc)
-apps/omlx-mac/Scripts/build.sh release
+# Przygotuj uruchamialne oMLX.app (xcodebuild + warstwy Pythona venvstacks + natywne kernele + podpis ad-hoc)
+make app
 
 # Wynik ląduje w apps/omlx-mac/build/Stage/oMLX.app
 open apps/omlx-mac/build/Stage/oMLX.app
 
 # Wymuś świeżą przebudowę venvstacks (inaczej cache po fingerprint)
 apps/omlx-mac/Scripts/build.sh release --rebuild-donor
-
-# Przygotuj z opcjonalnymi natywnymi kernelami GLM-5.2 / MiniMax M3
-apps/omlx-mac/Scripts/build.sh release --with-custom-kernel
 ```
 
 Pierwsza kompilacja na zimno trwa 10–20 minut (montowanie warstwy Pythona venvstacks). Kolejne kompilacje używają cache `packaging/_export/` i kończą się w około 4 minuty. Zobacz [packaging/README.md](packaging/README.md) po konfigurację warstw i [apps/omlx-mac/](apps/omlx-mac/) po źródła Swift.
