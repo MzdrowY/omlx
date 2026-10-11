@@ -8,8 +8,8 @@ Upstream: https://github.com/jundot/omlx — licencja **Apache 2.0** (zachować 
 Dodać `pl` do wszystkich trzech powierzchni językowych i wysłać PR do upstream:
 
 1. `README.pl.md` — tłumaczenie README (wzór: `README.fr.md`, `README.zh.md`)
-2. Panel admin — `omlx/admin/i18n/pl.json` (2019 kluczy, baza: `en.json`) + dopisanie opcji `pl` w `omlx/admin/templates/dashboard/_settings.html` (lista ~linii 71-80)
-3. Aplikacja macOS — lokalizacja `pl` w `apps/omlx-mac/Resources/Localizable.xcstrings` (1274 kluczy, String Catalog, źródło `en`)
+2. Panel admin — `apps/omlx-web/omlx_web/i18n/pl.json` (2100 kluczy, baza: `en.json`, kolejność kluczy 1:1 z `en.json`) + dopisanie opcji `pl` w `apps/omlx-web/omlx_web/templates/dashboard/_settings.html` (opcja ~linii 86, wzór: sąsiednie `option`)
+3. Aplikacja macOS — lokalizacja `pl` w `apps/omlx-mac/Resources/Localizable.xcstrings` (1280 kluczy, String Catalog, źródło `en`; wpisy `pl` alfabetycznie, `state: translated`)
 
 ## Zasady tłumaczenia
 
@@ -23,17 +23,24 @@ Dodać `pl` do wszystkich trzech powierzchni językowych i wysłać PR do upstre
 ## Workflow upstream (CONTRIBUTING.md)
 
 - Jeden PR = jedna spójna zmiana (np. sam `pl.json` + wpis w `_settings.html`).
-- Po zmianie kluczy web: zaktualizować `omlx/admin/i18n/en.json` i uruchomić `python scripts/normalize_i18n.py`.
-- Po edycji szablonów/JS admina: `python omlx/admin/build_css.py`.
-- Testy: `python -m pytest` (bez slow/integration). Zmiany UI: screenshot + sprawdzenie na żywym ekranie.
+- Po zmianie kluczy web: sprawdzić kompletność `pl.json` wobec `en.json` i uruchomić `make web` (przebudowuje CSS i normalizuje pliki tłumaczeń).
+- Testy: `python -m pytest` (bez slow/integration, domyślnie z `pytest.ini`).
 - PR opisuje: problem, podejście, co przetestowano. Maintainer robi squash-merge.
 
 ## Weryfikacja polskiej wersji
 
-1. `python -c "import json; json.load(open('omlx/admin/i18n/pl.json'))"` — poprawny JSON.
+1. `python -c "import json; json.load(open('apps/omlx-web/omlx_web/i18n/pl.json'))"` — poprawny JSON.
 2. Brak zgubionych placeholderów: skrypt porównujący `{...}` w en vs pl.
 3. Start serwera z `ui.language = "pl"` — panel `/admin` po polsku, brak kluczy wypadających do EN (fallback jest dopuszczalny tylko dla nowych kluczy upstream).
 4. `pytest` przechodzi.
+
+## Pułapki (sprawdzone 2026-10-11)
+
+- `apps/omlx-web/tests/test_admin_usage_ui.py` ma strażnika `assert len(locales) == N` — dodanie języka wymaga podbicia liczby (obecnie 11).
+- W `Localizable.xcstrings` jest 9 kluczy bez źródła `en` (tylko `ru`/`zh-Hans`: `''`, `'—'`, `'@%@'`, `'%@/'`, `'%lld%%'`, `'<namespace>/'`, `'enable_thinking'`, `'oMLX'`, `'reasoning_effort'`) — to artefakty, NIE dodawać im `pl` (do wyczyszczenia eksportem z Xcode).
+- Nowe klucze w `pl.json` wstawiać w kolejności jak w `en.json` (`make web` normalizuje kolejność).
+- Testy webowe chodzą na gołym venv + `pytest fastapi jinja2 httpx regex jsonschema requests itsdangerous numpy mlx mlx-lm mlx-vlm openai-harmony Pillow uvicorn`; 4 moduły (`auth/usage/cluster-contract`) ładują stos serwera.
+- Weryfikacja renderu: TestClient z `ui_language=lambda: "pl"` na `/admin/dashboard` + sprawdzenie, że teksty EN nie wyciekają (fałszywe alarmy: nazwy funkcji w zdaniach PL, np. `Context Window`, oraz komentarze HTML).
 
 ---
 
