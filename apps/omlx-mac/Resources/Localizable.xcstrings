@@ -2359,6 +2359,12 @@
             "state" : "translated",
             "value" : "已锁定"
           }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Przewodowy"
+          }
         }
       }
     },
@@ -13836,6 +13842,12 @@
             "state" : "translated",
             "value" : "最大上下文"
           }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Maks. kontekst"
+          }
         }
       }
     },
@@ -13853,6 +13865,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "速度"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Szybkość"
           }
         }
       }
@@ -16241,6 +16259,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "全局配置文件仅保存采样设置。要保留 Lightning MTP、TurboQuant 等模型设置，请另存为模型配置文件。"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Profile globalne zachowują tylko ustawienia próbkowania. Zapisz jako profil modelu, aby zachować Lightning MTP, TurboQuant i inne ustawienia modelu."
           }
         }
       }
@@ -25229,7 +25253,7 @@
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
-            "wartość" : "value"
+            "value" : "value"
           }
         }
       }
@@ -25255,6 +25279,12 @@
             "state" : "translated",
             "value" : "音频输入"
           }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wejście audio"
+          }
         }
       }
     },
@@ -25278,6 +25308,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "加载音频编码器，使 /v1/embeddings 接受音频条目。即使只发送文本也会占用更多内存。重新加载模型后生效。"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ładuje enkoder audio, żeby /v1/embeddings akceptował elementy audio. Zużywa więcej pamięci nawet przy żądaniach tylko tekstowych. Działa po przeładowaniu modelu."
           }
         }
       }
@@ -25303,6 +25339,12 @@
             "state" : "translated",
             "value" : "最大音频长度"
           }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Maks. długość audio"
+          }
         }
       }
     },
@@ -25326,6 +25368,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "超过此长度的音频会被截断（留空 = 30 秒）。受模型上下文限制，最长约 5 分钟。"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dłuższe audio jest ucinane do tej długości (puste = 30 s). Kontekst modelu ogranicza do około 5 minut."
           }
         }
       }
@@ -26725,6 +26773,12 @@
             "state" : "translated",
             "value" : "默认"
           }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "domyślny"
+          }
         }
       }
     },
@@ -26749,6 +26803,12 @@
             "state" : "translated",
             "value" : "bf16（默认）"
           }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "bf16 (domyślny)"
+          }
         }
       }
     },
@@ -26772,6 +26832,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "默认"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "domyślny"
           }
         }
       }
@@ -26916,6 +26982,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "默认（自适应）"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "domyślny (adaptive)"
           }
         }
       }
@@ -28440,6 +28512,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "决策"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Decyzja"
           }
         }
       }
@@ -31834,6 +31912,12 @@
             "state" : "translated",
             "value" : "前缀命中率"
           }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Trafienia prefiksów"
+          }
         }
       }
     },
@@ -31851,6 +31935,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "RAM 命中率"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Trafienia z pamięci"
           }
         }
       }
@@ -31870,6 +31960,12 @@
             "state" : "translated",
             "value" : "前缀驱逐"
           }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eksmisje prefiksów"
+          }
         }
       }
     },
@@ -31887,6 +31983,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "RAM 驱逐"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eksmisje z pamięci"
           }
         }
       }
@@ -31971,6 +32073,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "子块缓存"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cache podbloków"
           }
         }
       }
@@ -32239,6 +32347,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "运行时缓存"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cache runtime"
           }
         }
       }
