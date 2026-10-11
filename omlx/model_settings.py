@@ -204,7 +204,8 @@ class ModelSettings:
         chat_template_kwargs: Extra chat template keyword arguments.
         forced_ct_kwargs: Keys in chat_template_kwargs that cannot be overridden.
         ttl_seconds: Auto-unload after idle seconds (None = no TTL).
-        model_type_override: "llm", "vlm", "embedding", "reranker", or None (auto-detect).
+        model_type_override: "llm", "vlm", "embedding", "reranker", "decision",
+            or None (auto-detect).
         model_alias: API-visible alternative to the directory name.
         index_cache_freq: IndexCache: every Nth layer keeps indexer (DeepSeek DSA
             only; GLM-5.2 uses its native checkpoint schedule).
@@ -251,6 +252,9 @@ class ModelSettings:
             tensor operations -- M5-series and newer. On anything older the
             kernels do not load and the setting is refused. Decode is
             unaffected. Changes numerics: activations are quantized to INT8.
+            Also covers the routed-expert gate/up of Qwen3.8-Flash-Next
+            (affine Q4 / GS64 experts); the MTP draft layer and the down
+            projection stay on the A16 path.
             Mutually exclusive with qwen35_ane_prefill_enabled.
         qwen35_oq_a8_min_tokens: Shortest sequence routed to the kernels.
         moe_expert_offload_enabled: Stream MoE expert weights from the
@@ -325,7 +329,7 @@ class ModelSettings:
     )
     ttl_seconds: Optional[int] = None  # Auto-unload after idle seconds (None = no TTL)
     model_type_override: Optional[str] = (
-        None  # "llm", "vlm", "embedding", "reranker", or None (auto-detect)
+        None  # "llm", "vlm", "embedding", "reranker", "decision", or None (auto)
     )
     model_alias: Optional[str] = (
         None  # API-visible name (alternative to directory name)
@@ -388,7 +392,7 @@ class ModelSettings:
     qwen35_ane_prefill_cpu_threads: int = 8
     qwen35_ane_prefill_cpu_shared_resource: bool = True
 
-    # oQ mixed-bit QxA8 prefill kernels for Qwen3.5/3.6/3.8.
+    # oQ mixed-bit QxA8 prefill kernels for Qwen3.5/3.6/3.8 and Qwen3.8 Flash-Next.
     #
     # Off by default because it is an accuracy decision, not just a speed one:
     # activations are quantized to INT8 per row, which the W4/W5A16 path does
@@ -485,6 +489,16 @@ class ModelSettings:
     # loaders are allowed to execute custom Python from the model repository
     # (modeling_*.py, tokenization_*.py). Off by default — see issue #926.
     trust_remote_code: bool = False
+
+    # Embedding models with an audio tower (EmbeddingGemma 2): load it so
+    # /v1/embeddings accepts items[].audio. Off by default because the tower is
+    # resident even for text-only requests (EmbeddingGemma 2: 0.88 -> 1.46 GB).
+    embedding_audio_enabled: bool = False
+    # Longest audio item, in seconds, an embedding model reads before cutting
+    # the waveform. None keeps the processor default (Gemma 4 audio: 30 s).
+    # The model's context still bounds it: EmbeddingGemma 2 fits about 327 s
+    # (8192 tokens at 40 ms each); longer inputs get the token-limit error.
+    embedding_audio_max_seconds: Optional[float] = None
 
     # Metadata
     display_name: Optional[str] = None
@@ -808,7 +822,11 @@ class ModelSettingsManager:
                 for model_id, settings in self._settings.items()
             },
         }
+        self._write_settings_file(data)
+        logger.debug(f"Saved settings for {len(self._settings)} models")
 
+    def _write_settings_file(self, data: dict) -> None:
+        """Replace the settings file with ``data`` atomically."""
         # Write to temp file first, then rename for atomicity. The pid in
         # the temp name keeps concurrent processes from sharing a temp path
         # and renaming each other's partial writes into place.
@@ -822,7 +840,6 @@ class ModelSettingsManager:
                 os.fsync(f.fileno())
 
             temp_file.replace(self.settings_file)
-            logger.debug(f"Saved settings for {len(self._settings)} models")
 
         except Exception as e:
             logger.error(f"Failed to save settings file: {e}")
@@ -845,6 +862,47 @@ class ModelSettingsManager:
                 return ModelSettings.from_dict(settings.to_dict())
 
             return ModelSettings()
+
+    def has_settings(self, model_id: str) -> bool:
+        """Return True when settings for the model are saved."""
+        with self._lock:
+            return model_id in self._settings
+
+    def add_initial_settings(self, initial: dict[str, dict[str, Any]]) -> list[str]:
+        """Save settings for models that have none yet.
+
+        Only the new records are added to the file. Records already on disk
+        keep their content, including fields or records this build cannot
+        load. Nothing is written when the file cannot be read. Returns the
+        IDs of the models that were added.
+        """
+        with self._lock:
+            pending = [mid for mid in initial if mid not in self._settings]
+            if not pending:
+                return []
+            data: Any = {"version": SETTINGS_VERSION, "models": {}}
+            if self.settings_file.exists():
+                try:
+                    data = json.loads(self.settings_file.read_text(encoding="utf-8"))
+                except (OSError, ValueError) as e:
+                    logger.warning(f"Initial model settings not saved: {e}")
+                    return []
+            models = data.setdefault("models", {}) if isinstance(data, dict) else None
+            if not isinstance(models, dict):
+                logger.warning("Initial model settings not saved: invalid file")
+                return []
+            added = {
+                mid: ModelSettings.from_dict(initial[mid])
+                for mid in pending
+                if mid not in models
+            }
+            if not added:
+                return []
+            for mid, settings in added.items():
+                models[mid] = settings.to_dict()
+            self._write_settings_file(data)
+            self._settings.update(added)
+            return list(added)
 
     def get_settings_for_request(
         self,
@@ -1649,7 +1707,7 @@ class ModelSettingsManager:
 
     def list_templates(self) -> list[dict]:
         # Shipped JSON seeds were retired in favor of the client-side preset
-        # bundle (`omlx/admin/static/omlx_preset.json`); every entry on this
+        # bundle (`omlx_web/static/omlx_preset.json`); every entry on this
         # surface is user-created. Callers that distinguish presets from
         # user templates do so via the preset bundle, not an `is_builtin`
         # flag on this response.
