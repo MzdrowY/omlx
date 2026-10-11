@@ -284,6 +284,7 @@
   "models.browse.no_results": "Nie znaleziono wyników.",
   "models.browse.tight_fit": "Na styk",
   "models.browse.high_oom_risk": "Wysokie ryzyko OOM",
+  "models.browse.downloaded": "Pobrany",
   "models.browse.params_suffix": "params",
   "models.browse.mlx_only": "Tylko MLX",
   "models.queue.section_label": "Kolejka pobierania",
