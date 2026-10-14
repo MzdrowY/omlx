@@ -202,6 +202,7 @@ Parametry próbkowania, kwargs szablonu czatu, TTL, alias modelu, nadpisanie typ
 
 - **Alias modelu**: ustaw własną nazwę widoczną w API. `/v1/models` zwraca alias, a żądania akceptują zarówno alias, jak i nazwę katalogu.
 - **Nadpisanie typu modelu**: ręcznie ustaw model jako LLM albo VLM, niezależnie od auto-wykrywania.
+- **Silnik zewnętrzny**: serwuj checkpointy MLX Qwen3.8-27B i Qwen3.6-35B-A3B z Twoich katalogów modeli silnikiem Metal [Splash](https://github.com/incoai/splash) we własnym procesie (oficjalny build na M3 lub nowsze, Splash M1 na M1/M2). Zobacz [docs/Splash.md](docs/Splash.md).
 - **Profile**: zapisuj nazwane pakiety ustawień per model i przełączaj je z panelu admina. Profil można opcjonalnie wystawić jako osobny model: `/v1/models` listuje wtedy też `<model>:<profil>` (np. `qwen3-8b:thinking`), który serwuje na tym samym silniku co model bazowy, z ustawieniami profilu nakładanymi per żądanie — bez dodatkowej pamięci i bez przeładowania. Gdy model bazowy ma alias, wystawione ID ogłaszane jest jako `<alias>:<profil>`; forma z nazwą katalogu nadal działa, tak jak dla modelu bazowego.
 
 <p align="center">
@@ -227,11 +228,13 @@ Wyszukuj i pobieraj modele MLX z HuggingFace bezpośrednio w panelu admina. Prze
 
 ### Integracje
 
-Skonfiguruj OpenClaw, OpenCode, Codex, Hermes Agent, Copilot, Pi i DeepSeek Harness bezpośrednio z panelu admina, jednym kliknięciem. Bez ręcznej edycji konfiguracji.
+Skonfiguruj OpenClaw, OpenCode, Codex, Hermes Agent, Copilot, Pi, Mistral Vibe i DeepSeek Harness bezpośrednio z panelu admina, jednym kliknięciem. Bez ręcznej edycji konfiguracji.
 
 <p align="center">
   <img src="docs/images/omlx_integrations.png" alt="Integracje oMLX" width="720">
 </p>
+
+Zainstaluj [Mistral Vibe](https://github.com/mistralai/mistral-vibe) 2.26.0 lub nowszy poleceniem `uv tool install mistral-vibe`, potem uruchom `omlx launch vibe`, żeby wybrać lokalny model, albo `omlx launch vibe --model <model-id>`. Provider, model, referencja klucza API i okno kontekstu Vibe są dla tego procesu konfigurowane przez nadpisania środowiskowe `VIBE_*`. Istniejące `config.toml`, `VIBE_HOME`, uprawnienia narzędzi i konfiguracja chmury są zachowywane. Argumenty Vibe przekazuj po `--`, na przykład `omlx launch vibe --model <model-id> -- --resume`.
 
 ### Benchmark wydajności
 
@@ -308,7 +311,7 @@ Modele wykrywane są automatycznie po typie. Możesz też pobierać modele bezpo
 | OCR | DeepSeek-OCR, DOTS-OCR, GLM-OCR |
 | Embedding | BERT, BGE-M3, ModernBERT, EmbeddingGemma 2 |
 | Reranker | ModernBERT, XLM-RoBERTa |
-| Decyzja | Clef, Clef-Flash, OpenJev |
+| Decyzja | Clef, Clef-Flash, OpenJev, Decision 3.0 (d3, d3-flash, d3-mini, d3-nano, d3-lite, d3-edge) |
 
 ## Konfiguracja CLI
 
@@ -453,5 +456,5 @@ Wkład mile widziany! Zobacz [przewodnik współtworzenia](docs/CONTRIBUTING.md)
 - [dflash-mlx](https://github.com/bstnxbt/dflash-mlx) — blokowe dyfuzyjne dekodowanie spekulatywne na Apple Silicon
 - [MTPLX](https://github.com/youssofal/mtplx) — kernele Metal weryfikacji kształtu Lightning MTP napędzane przez MTPLX od Youssofa Altoukhiego, który zainspirował też potok depth-k
 - [mlx-serve](https://github.com/ddalcu/mlx-serve) — sfuzowany kernel GDN verify prework zaadaptowany z portu mlx-serve kernela qwen35_packed_gdn_prework z wyzwania mlxfast, a sfuzowane kernele dekodowania i prefill GDN dla Qwen4 zaadaptowane z `transformer.zig` mlx-serve na licencji MIT; 128-bitowe staging K/V w Qwen4 QSA zaadaptowane z `msv_attn_p256` mlx-serve na licencji MIT
-- [Splash](https://github.com/incoai/splash) — kernele liniowe weryfikacji kształtu używają operandu wag bf16 `0x4300 | q` z sumami wejść per grupa (z Apache-2.0 `linear_q4_sgmatrix.metal` Splash), a uwaga weryfikacyjna operacji tensorowych adaptuje projekt kafelków z `paged_attention_tile.h` Splash
+- [Splash](https://github.com/incoai/splash) — kernele liniowe weryfikacji kształtu używają operandu wag bf16 `0x4300 | q` z sumami wejść per grupa (z Apache-2.0 `linear_q4_sgmatrix.metal` Splash), a uwaga weryfikacyjna operacji tensorowych adaptuje projekt kafelków z `paged_attention_tile.h` Splash; sam Splash może też serwować obsługiwane modele jako silnik zewnętrzny
 - [SiliconScope](https://github.com/kennss/SiliconScope) — statystyki paska menu czerpią projekt i podejście renderowania z SiliconScope od Kennta Kima, który zainspirował też energooszczędne bramkowanie przerysowań
